@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS swapi (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name VARCHAR(255),
+  height INT,
+  mass INT,
+  gender VARCHAR(255),
+)

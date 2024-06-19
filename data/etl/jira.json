@@ -1,0 +1,69 @@
+{
+  "source": {
+    "type": "api",
+    "connection": {
+      "url": "http://jira.atlassian.com/rest/api/2/issue",
+      "method": "GET",
+      "headers": {
+        "Authorization": "Basic xxxxx",
+        "Content-Type": "application/json"
+      },
+      "params": {
+        "jql": "project = JRA AND resolution = Unresolved ORDER BY priority DESC, updated DESC",
+        "maxResults": 10
+      }
+    },
+    "scripts": ["create_jira_table.sql"]
+  },
+  "target": {
+    "table": "jira",
+    "resultPath": "issues",
+    "columns": [
+      {
+        "source": "key",
+        "target": "key",
+        "dbType": "VARCHAR(255)"
+      },
+      {
+        "source": "fields.summary",
+        "target": "summary",
+        "dbType": "VARCHAR(255)"
+      },
+      {
+        "source": "fields.priority.name",
+        "target": "priority",
+        "dbType": "VARCHAR(255)"
+      },
+      {
+        "source": "fields.status.name",
+        "target": "status",
+        "dbType": "VARCHAR(255)"
+      },
+      {
+        "source": "fields.assignee.displayName",
+        "target": "assignee",
+        "dbType": "VARCHAR(255)"
+      },
+      {
+        "source": "fields.reporter.displayName",
+        "target": "reporter",
+        "dbType": "VARCHAR(255)"
+      },
+      {
+        "source": "fields.created",
+        "target": "created_at",
+        "dbType": "TIMESTAMP"
+      },
+      {
+        "source": "fields.updated",
+        "target": "updated_at",
+        "dbType": "TIMESTAMP"
+      },
+      {
+        "target": "extractedAt",
+        "dbType": "TIMESTAMP",
+        "value": "NOW()"
+      }
+    ]
+  }
+}

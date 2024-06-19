@@ -1,0 +1,42 @@
+{
+  "source": {
+    "type": "api",
+    "connection": {
+      "url": "https://swapi.dev/api/people/",
+      "method": "GET",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "params": {
+        "page": 1
+      }
+    },
+    "scripts": ["create_swapi_table.sql"]
+  },
+  "target": {
+    "table": "swapi_people",
+    "resultsPath": "results",
+    "columns": [
+      {
+        "target": "name",
+        "source": "name",
+        "dbType": "VARCHAR(255)"
+      },
+      {
+        "target": "height",
+        "source": "height",
+        "dbType": "INT"
+      },
+      {
+        "target": "mass",
+        "source": "mass",
+        "dbType": "INT"
+      },
+      {
+        "target": "hair_color",
+        "source": "hair_color",
+        "dbType": "VARCHAR(255)"
+      }
+    ]
+  }
+}
