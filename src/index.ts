@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { prettyJSON } from 'hono/pretty-json';
 import * as ETLService from './services/etl';
+import * as SchemaService from './services/schema';
 import { Fail, Ok } from './models/return.models';
 
 const ADMIN_TENANT_ID = 'admin123';
@@ -21,6 +22,9 @@ function setupRoutes(app: Hono) {
   app.get('/healthcheck', (c) => c.json({ status: 'alive' }));
   app.notFound((c) => c.json({ error: 'Not found' }, 404));
 
+  /**
+   * ETL ROUTES
+   */
   app.get('/etl/config', async (c) => {
     const tenantId = c.req.header('tenant');
     if (!tenantId || tenantId !== ADMIN_TENANT_ID) {
@@ -62,14 +66,29 @@ function setupRoutes(app: Hono) {
       return c.json(response, status);
     }
   });
+
+  /**
+   * Get type schema of json
+   */
+  app.post('/schema', async (c) => {
+    let data: any;
+    try {
+      data = await c.req.json();
+    } catch (e: any) {
+      return c.json({ error: 'Missing request body' }, 400);
+    }
+
+    const schema = SchemaService.getSchema(data);
+    return c.json(schema, 200);
+  });
 }
 
 function setupPlugins(app: Hono) {
   app.use(prettyJSON());
-  app.use('/', async (c, next) => {
-    console.log('hello before middleware!');
-    await next();
-    console.log('hello after middleware!');
-    // c.res.headers.set('X-App-Name', 'ETL Service');
-  });
+  // app.use('/etl', async (c, next) => {
+  //   console.log('hello before middleware!');
+  //   await next();
+  //   console.log('hello after middleware!');
+  //   // c.res.headers.set('X-App-Name', 'ETL Service');
+  // });
 }
