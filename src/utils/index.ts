@@ -4,20 +4,22 @@
  * @param path
  * @returns
  */
-export function getPropertyByPath(obj: Record<string, unknown> | Record<string, unknown>[], path: string): any {
+export function getPropertyByPath(
+  obj: unknown[] | Record<string, unknown> | Record<string, unknown>[],
+  path: string
+): any {
   const keys = path.split('.').filter(Boolean);
   let value: unknown = obj;
 
   if (!keys.length) return value;
 
   if (Array.isArray(value)) {
-    getArrayValueByIndex(value, keys);
+    return getArrayValueByIndex(value, keys);
   }
 
   for (let i = 0; i < keys.length; i++) {
     if (Array.isArray(value)) {
-      getArrayValueByIndex(value, keys.slice(i));
-      continue;
+      return getArrayValueByIndex(value, keys.slice(i));
     }
 
     value = (value as Record<string, unknown>)[keys[i]];

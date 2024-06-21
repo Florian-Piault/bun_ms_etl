@@ -1,8 +1,13 @@
 import { Schema, Type } from '../models/schema.models';
 import { getPropertyByPath } from '../utils';
 
-export function getSchema(data: unknown[] | Record<string, unknown>): Schema {
+export function getSchema(data: unknown[] | Record<string, unknown>, path?: string): Schema {
   if (!data) return [];
+  if (path) {
+    data = getPropertyByPath(data, path);
+  }
+
+  if (typeof data === 'string') return [{ key: data, type: getType(data) }];
 
   if (Array.isArray(data)) return getArraySchema(data);
   return getRecordSchema(data);
@@ -19,7 +24,7 @@ function getArraySchema(data: unknown[]): Schema {
   }
 
   if (typeof first === 'object') {
-    const subSchema = getSchema(first as Record<string, unknown>);
+    const subSchema = getRecordSchema(first as Record<string, unknown>);
     return [{ key: '', type: { name: 'object', subType: subSchema } }];
   }
 
@@ -36,10 +41,11 @@ function getRecordSchema(data: Record<string, unknown>): Schema {
     if (Array.isArray(value)) {
       const subSchema = getArraySchema(value);
       schema.push({ key, type: { name: 'array', subType: subSchema } });
+      continue;
     }
 
     if (typeof value === 'object') {
-      const subSchema = getSchema(value as Record<string, unknown>);
+      const subSchema = getRecordSchema(value as Record<string, unknown>);
       schema.push({ key, type: { name: 'object', subType: subSchema } });
     } else {
       const type = getType(value as string);
