@@ -4,6 +4,7 @@ import { prettyJSON } from 'hono/pretty-json';
 import * as ETLService from './services/etl';
 import * as SchemaService from './services/schema';
 import { Fail, Ok } from './models/return.models';
+import { mapSchemaToTableSchema } from './models/schema.models';
 
 const ADMIN_TENANT_ID = 'admin123';
 
@@ -61,16 +62,18 @@ function setupRoutes(app: Hono) {
   app.post('/schema', async (c) => {
     let data: any;
     let path: string | undefined;
+    let toDb: boolean;
 
     try {
       data = await c.req.json();
-      path = c.req.query('path');
+      path = c.req.query('path') || '';
+      toDb = c.req.query('toDB') === 'true';
     } catch (e: any) {
       return c.json({ error: 'Missing request body' }, 400);
     }
 
     const schema = SchemaService.getSchema(data, path);
-    return c.json(schema, 200);
+    return c.json(toDb ? mapSchemaToTableSchema(schema) : schema, 200);
   });
 }
 

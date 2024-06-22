@@ -7,7 +7,7 @@
 export function getPropertyByPath(
   obj: unknown[] | Record<string, unknown> | Record<string, unknown>[],
   path: string
-): any {
+): unknown {
   const keys = path.split('.').filter(Boolean);
   let value: unknown = obj;
 

@@ -1,75 +1,113 @@
-import { Schema, Type } from '../models/schema.models';
+import { Definition, Schema, Type } from '../models/schema.models';
 import { getPropertyByPath } from '../utils';
 
-export function getSchema(data: unknown[] | Record<string, unknown>, path?: string): Schema {
-  if (!data) return [];
-  if (path) {
-    data = getPropertyByPath(data, path);
+export function getSchema(rawData: unknown[] | Record<string, unknown>, path: string): Schema | undefined {
+  const data = getPropertyByPath(rawData, path);
+
+  if (!data) {
+    return;
   }
 
-  if (typeof data === 'string') return [{ key: data, type: getType(data) }];
+  const definitions = getSchemaDefinitions(data, path);
 
-  if (Array.isArray(data)) return getArraySchema(data);
-  return getRecordSchema(data);
+  return {
+    table: path.split('.').at(-1) || '',
+    definitions,
+    path,
+  };
 }
 
-function getArraySchema(data: unknown[]): Schema {
+function getSchemaDefinitions(data: unknown, path: string): Definition[] {
+  if (!data) {
+    return [];
+  }
+
+  if (data !== Object(data)) {
+    return getOnlyPropertySchema(data);
+  }
+
+  if (Array.isArray(data)) {
+    return getArraySchema(data, path);
+  }
+
+  if (Object.keys(data).length === 0) {
+    return [];
+  }
+
+  return getObjectSchema(data as Record<string, unknown>, path);
+}
+
+/**
+ * Get property schema if it's a single property (string, number, boolean, ...)
+ * @param data
+ * @param path
+ * @returns
+ */
+function getOnlyPropertySchema(data: unknown): Definition[] {
+  return [
+    {
+      key: data as string,
+      type: getType(data as string),
+    },
+  ];
+}
+
+function getArraySchema(data: unknown[], path: string): Definition[] {
   if (data.length === 0) return [];
 
-  const first = data[0];
+  const firstItem = data[0];
 
-  if (Array.isArray(first)) {
-    const subSchema = getArraySchema(first);
-    return [{ key: '', type: { name: 'array', subType: subSchema } }];
+  if (Array.isArray(firstItem)) {
+    return [{ key: '', type: { name: 'array', precision: getArraySchema(firstItem, path) } }];
   }
 
-  if (typeof first === 'object') {
-    const subSchema = getRecordSchema(first as Record<string, unknown>);
-    return [{ key: '', type: { name: 'object', subType: subSchema } }];
+  if (firstItem !== Object(firstItem)) {
+    return [{ key: '', type: getType(firstItem as string) }];
   }
 
-  const type = getType(first as string);
-  return [{ key: '', type }];
+  return [{ key: '', type: { name: 'array', precision: getObjectSchema(firstItem as Record<string, unknown>, path) } }];
 }
 
-function getRecordSchema(data: Record<string, unknown>): Schema {
-  const schema: Schema = [];
+function getObjectSchema(data: Record<string, unknown>, path: string): Definition[] {
+  const definitions: Definition[] = [];
 
   for (const key in data) {
     const value = data[key];
 
     if (Array.isArray(value)) {
-      const subSchema = getArraySchema(value);
-      schema.push({ key, type: { name: 'array', subType: subSchema } });
+      const subSchema = getArraySchema(value, path + '.' + key);
+      definitions.push({ key, type: { name: 'array', precision: subSchema } });
       continue;
     }
 
-    if (typeof value === 'object') {
-      const subSchema = getRecordSchema(value as Record<string, unknown>);
-      schema.push({ key, type: { name: 'object', subType: subSchema } });
-    } else {
-      const type = getType(value as string);
-      schema.push({ key, type });
+    if (value !== Object(value)) {
+      definitions.push({ key, type: getType(value as string) });
+      continue;
     }
+
+    definitions.push({
+      key,
+      type: { name: 'object', precision: getObjectSchema(value as Record<string, unknown>, path + '.' + key) },
+    });
   }
 
-  return schema;
+  return definitions;
 }
 
 function getType(value: string): Type {
   if (isTemporal(value)) {
-    if (isTime(value)) return { name: 'date', subType: 'time' };
-    if (isDate(value)) return { name: 'date' };
-    if (isDatetime(value)) return { name: 'date', subType: 'datetime' };
+    if (isTime(value)) return { name: 'date', precision: 'time' };
+    if (isDate(value)) return { name: 'date', precision: 'date' };
+    if (isDatetime(value)) return { name: 'date', precision: 'datetime' };
   }
 
-  if (isBoolean(value)) return { name: 'boolean' };
+  if (isBoolean(value)) return { name: 'boolean', precision: 'boolean' };
 
   if (isNumber(value)) {
-    return isDecimal(value) ? { name: 'number', subType: 'float' } : { name: 'number', subType: 'int' };
+    return isDecimal(value) ? { name: 'number', precision: 'float' } : { name: 'number', precision: 'int' };
   }
 
-  return { name: 'string' };
+  return { name: 'string', precision: 'string' };
 }
 
 function isNumber(value: string): boolean {
