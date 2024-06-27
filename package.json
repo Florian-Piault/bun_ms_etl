@@ -1,7 +1,7 @@
 {
   "name": "bun_ms_etl",
   "scripts": {
-    "dev": "bun run --hot src/index.ts"
+    "dev": "bun run --hot src/server.ts"
   },
   "dependencies": {
     "hono": "^4.4.6"

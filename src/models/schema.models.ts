@@ -1,11 +1,4 @@
-/**
- * PostgreSQL data types
- */
 type DbType = 'VARCHAR(255)' | 'VARCHAR(MAX)' | 'TEXT' | 'INT' | 'FLOAT' | 'DATE' | 'TIME' | 'TIMESTAMP' | 'BOOLEAN';
-
-/**
- * Human readable data types
- */
 type DataType = 'string' | 'char' | 'int' | 'float' | 'boolean' | 'time' | 'datetime' | 'date';
 
 /**
@@ -23,7 +16,7 @@ export interface Definition {
 }
 
 /**
- * Typescript model from a json object
+ * Typescript model from a json object to a DB table schema
  *
  * @param table name of the table
  * @param definitions list of columns
@@ -34,10 +27,6 @@ export interface Schema {
   definitions: Definition[];
   path: string;
 }
-
-/**
- * DB table schema from a typescript model
- */
 
 export interface TableSchema {
   name: string;

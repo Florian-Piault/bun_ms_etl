@@ -3,6 +3,7 @@ import { cors } from 'hono/cors';
 import { prettyJSON } from 'hono/pretty-json';
 import * as ETLService from './services/etl';
 import * as SchemaService from './services/schema';
+import * as APIDataService from './services/api-data';
 import { Fail, Ok } from './models/return.models';
 import { mapSchemaToTableSchema } from './models/schema.models';
 
@@ -56,6 +57,20 @@ function setupRoutes(app: Hono) {
     }
   });
 
+  app.post('/etl-creator', async (c) => {
+    const body = await c.req.json();
+
+    const { uri, path, ...rest } = body;
+    const data = await APIDataService.getData(uri, path);
+    const schema = SchemaService.getSchema(data, path);
+
+    if (!data) {
+      return c.json({ error: 'Data not found' }, 400);
+    }
+
+    return c.json({ data, schema }, 200);
+  });
+
   /**
    * Get type schema of json
    */
@@ -88,25 +103,12 @@ function setupPlugins(app: Hono) {
       exposeHeaders: ['Content-Length'],
     })
   );
-  app.use('/etl/*', async (c, next) => {
-    const tenantId = c.req.header('tenant');
-    if (!tenantId || tenantId !== ADMIN_TENANT_ID) {
-      return c.json({ error: 'Unauthorized' }, 401);
+  app.use('/etl-creator/*', async (c, next) => {
+    try {
+      await c.req.json();
+      await next();
+    } catch (e) {
+      return c.json({ error: 'Missing request body' }, 400);
     }
-
-    const pipelineId = c.req.query('pipelineId');
-    if (!pipelineId) {
-      return c.json({ error: 'Missing pipelineId' }, 400);
-    }
-    await next();
-  });
-
-  app.use('/schema', async (c, next) => {
-    const tenantId = c.req.header('tenant');
-    if (!tenantId || tenantId !== ADMIN_TENANT_ID) {
-      return c.json({ error: 'Unauthorized' }, 401);
-    }
-
-    await next();
   });
 }

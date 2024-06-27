@@ -1,23 +1,17 @@
 import { Definition, Schema, Type } from '../models/schema.models';
 import { getPropertyByPath } from '../utils';
 
-export function getSchema(rawData: unknown[] | Record<string, unknown>, path: string): Schema | undefined {
-  const data = getPropertyByPath(rawData, path);
-
-  if (!data) {
-    return;
-  }
-
-  const definitions = getSchemaDefinitions(data, path);
+export function getSchema(data: unknown[] | Record<string, unknown>, path: string): Schema | undefined {
+  const definitions = getSchemaDefinitions(data);
 
   return {
-    table: path.split('.').at(-1) || '',
+    table: path ? path.split('.').at(-1) || '' : '',
     definitions,
     path,
   };
 }
 
-function getSchemaDefinitions(data: unknown, path: string): Definition[] {
+function getSchemaDefinitions(data: unknown): Definition[] {
   if (!data) {
     return [];
   }
@@ -27,14 +21,14 @@ function getSchemaDefinitions(data: unknown, path: string): Definition[] {
   }
 
   if (Array.isArray(data)) {
-    return getArraySchema(data, path);
+    return getArraySchema(data);
   }
 
   if (Object.keys(data).length === 0) {
     return [];
   }
 
-  return getObjectSchema(data as Record<string, unknown>, path);
+  return getObjectSchema(data as Record<string, unknown>);
 }
 
 /**
@@ -52,30 +46,30 @@ function getOnlyPropertySchema(data: unknown): Definition[] {
   ];
 }
 
-function getArraySchema(data: unknown[], path: string): Definition[] {
+function getArraySchema(data: unknown[]): Definition[] {
   if (data.length === 0) return [];
 
   const firstItem = data[0];
 
   if (Array.isArray(firstItem)) {
-    return [{ key: '', type: { name: 'array', precision: getArraySchema(firstItem, path) } }];
+    return [{ key: '', type: { name: 'array', precision: getArraySchema(firstItem) } }];
   }
 
   if (firstItem !== Object(firstItem)) {
     return [{ key: '', type: getType(firstItem as string) }];
   }
 
-  return [{ key: '', type: { name: 'array', precision: getObjectSchema(firstItem as Record<string, unknown>, path) } }];
+  return [{ key: '', type: { name: 'array', precision: getObjectSchema(firstItem as Record<string, unknown>) } }];
 }
 
-function getObjectSchema(data: Record<string, unknown>, path: string): Definition[] {
+function getObjectSchema(data: Record<string, unknown>): Definition[] {
   const definitions: Definition[] = [];
 
   for (const key in data) {
     const value = data[key];
 
     if (Array.isArray(value)) {
-      const subSchema = getArraySchema(value, path + '.' + key);
+      const subSchema = getArraySchema(value);
       definitions.push({ key, type: { name: 'array', precision: subSchema } });
       continue;
     }
@@ -87,7 +81,7 @@ function getObjectSchema(data: Record<string, unknown>, path: string): Definitio
 
     definitions.push({
       key,
-      type: { name: 'object', precision: getObjectSchema(value as Record<string, unknown>, path + '.' + key) },
+      type: { name: 'object', precision: getObjectSchema(value as Record<string, unknown>) },
     });
   }
 
