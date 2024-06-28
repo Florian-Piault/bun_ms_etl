@@ -15,3 +15,12 @@ export function getPropertyByPath(obj: any, path: string | undefined): unknown {
     return null;
   }
 }
+
+export async function httpGet(url: string) {
+  return fetch(url)
+    .then((res) => res.json())
+    .catch(() => {
+      console.error('Error fetching data');
+      return null;
+    });
+}

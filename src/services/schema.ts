@@ -1,5 +1,4 @@
 import { Definition, Schema, Type } from '../models/schema.models';
-import { getPropertyByPath } from '../utils';
 
 export function getSchema(data: unknown[] | Record<string, unknown>, path: string): Schema | undefined {
   const definitions = getSchemaDefinitions(data);
@@ -52,14 +51,15 @@ function getArraySchema(data: unknown[]): Definition[] {
   const firstItem = data[0];
 
   if (Array.isArray(firstItem)) {
-    return [{ key: '', type: { name: 'array', precision: getArraySchema(firstItem) } }];
+    return getArraySchema(firstItem);
   }
 
+  // case of a single property
   if (firstItem !== Object(firstItem)) {
-    return [{ key: '', type: getType(firstItem as string) }];
+    return [{ key: 'N/A', type: getType(firstItem as string) }];
   }
 
-  return [{ key: '', type: { name: 'array', precision: getObjectSchema(firstItem as Record<string, unknown>) } }];
+  return getObjectSchema(firstItem as Record<string, unknown>);
 }
 
 function getObjectSchema(data: Record<string, unknown>): Definition[] {
@@ -127,9 +127,10 @@ function isDate(value: string): boolean {
 }
 
 function isDatetime(value: string): boolean {
+  const yyyy_mm_dd_T_hh_mm_ss_zz = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}Z/.test(value);
   const yyyy_mm_dd_T_hh_mm_ss = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(value);
   const dd_mm_yyyy_T_hh_mm_ss = /^\d{2}-\d{2}-\d{4}T\d{2}:\d{2}:\d{2}$/.test(value);
-  return yyyy_mm_dd_T_hh_mm_ss || dd_mm_yyyy_T_hh_mm_ss;
+  return yyyy_mm_dd_T_hh_mm_ss || dd_mm_yyyy_T_hh_mm_ss || yyyy_mm_dd_T_hh_mm_ss_zz;
 }
 
 function isBoolean(value: string): boolean {

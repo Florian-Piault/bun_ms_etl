@@ -7,7 +7,7 @@ type DataType = 'string' | 'char' | 'int' | 'float' | 'boolean' | 'time' | 'date
 
 export interface Type {
   name: 'string' | 'number' | 'boolean' | 'date' | 'object' | 'array';
-  precision: DataType | 'object' | 'array' | Definition[] | Type;
+  precision: DataType | 'object' | 'array' | Definition[];
 }
 
 export interface Definition {

@@ -10,10 +10,6 @@ export async function getData(uri: string, path: string = '') {
 
   const paths = path.split('.');
   for (const prop of paths) {
-    while (Array.isArray(_data)) {
-      _data = _data[0];
-    }
-
     if (_data && _data[prop]) {
       _data = _data[prop];
     }

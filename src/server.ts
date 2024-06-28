@@ -4,6 +4,7 @@ import { prettyJSON } from 'hono/pretty-json';
 import * as ETLService from './services/etl';
 import * as SchemaService from './services/schema';
 import * as APIDataService from './services/api-data';
+import * as DatasourceService from './services/datasource';
 import { Fail, Ok } from './models/return.models';
 import { mapSchemaToTableSchema } from './models/schema.models';
 
@@ -71,6 +72,16 @@ function setupRoutes(app: Hono) {
     return c.json({ data, schema }, 200);
   });
 
+  app.post('/datasource', async (c) => {
+    const body = await c.req.json();
+
+    const { uri, type, ...rest } = body;
+
+    const data = await DatasourceService.getData(uri, type);
+
+    return c.json({ ...data }, 200);
+  });
+
   /**
    * Get type schema of json
    */
@@ -104,6 +115,14 @@ function setupPlugins(app: Hono) {
     })
   );
   app.use('/etl-creator/*', async (c, next) => {
+    try {
+      await c.req.json();
+      await next();
+    } catch (e) {
+      return c.json({ error: 'Missing request body' }, 400);
+    }
+  });
+  app.use('/datasource/*', async (c, next) => {
     try {
       await c.req.json();
       await next();
